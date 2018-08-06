@@ -231,7 +231,7 @@ def tcool_Thomson(gamma, uphot):
     we obtain tcool = 1 / (k gamma).
     """
     if not type(uphot) == u.Quantity:
-        uphot_prime = uphot * u.Unit('g cm^2 / s^2 / cm^3') # erg / cm^3
+        uphot = uphot * u.Unit('g cm^-1  s^-2') # erg / cm^3
     # this is simply the factor from dgamma / dt
     result = 3. * c.m_e.cgs * c.c.cgs / c.sigma_T.cgs / uphot / 4.
     # divide by gamma factor from mean scattered energy 
