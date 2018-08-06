@@ -204,18 +204,15 @@ def dgamma_dt_Thomson(gamma, phot_dens_iso):
     result *= phot_dens_iso * u.eV / u.cm**3.
     return result
 
-def tcool_Thomson(Egamma, Eext, uphot_prime):
+def tcool_Thomson(gamma, uphot):
     """
     Calculate cooling time in Thomson regime 
     on a photon field.
 
     Parameters
     ----------
-    Egamma: float
-        Gamma ray energy in same units as Eext
-
-    Eext: float
-        mean energy of external radiation field in same units as Egamma
+    gamma: float
+        Gamma factor of scattered electrons 
 
     uphot_prime: float
         Energy density of external radiation field in comoving frame
@@ -232,15 +229,13 @@ def tcool_Thomson(Egamma, Eext, uphot_prime):
     so that 1 / gamma_final - 1 / gamma_initial = k t
     and with gamma_final = 1 / 2 gamma_inital 
     we obtain tcool = 1 / (k gamma).
-    And then use that Escattered ~ 4 / 3 sigma_T gamma^2 Eext, 
-    solve for gamma and insert into t cool
     """
-    if not type(uphot_prime) == u.Quantity:
-        uphot_prime = uphot_prime * u.Unit('g cm^2 / s^2 / cm^3') # erg / cm^3
+    if not type(uphot) == u.Quantity:
+        uphot_prime = uphot * u.Unit('g cm^2 / s^2 / cm^3') # erg / cm^3
     # this is simply the factor from dgamma / dt
-    result = 3. * c.m_e.cgs * c.c.cgs / c.sigma_T.cgs / uphot_prime / 4.
+    result = 3. * c.m_e.cgs * c.c.cgs / c.sigma_T.cgs / uphot / 4.
     # divide by gamma factor from mean scattered energy 
-    result /= np.sqrt( 3. / 4. * Egamma / Eext)
+    result /= gamma
     return result
 
 def dgamma_dt_KN(gamma, T = 2.726):
