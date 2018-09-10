@@ -178,7 +178,7 @@ def ic_scattered_phot_spec(gamma, e, e1, phot_dens):
     see Blumenthal & Gould 1970, Eq. 2.47 - 2.51
     """
     result, mask = ic_kernel(gamma, e, e1)
-    result *= u.dimensionless_unscaled
+    result = result * u.dimensionless_unscaled
     result *= phot_dens(e) / (e * u.eV)
     result *= 3. / 4. * (c.sigma_T * c.c).to('cm3 s-1') / gamma / gamma
     return result, mask
@@ -216,6 +216,7 @@ def tcool_Thomson(gamma, uphot):
 
     uphot_prime: float
         Energy density of external radiation field in comoving frame
+	in erg / cm^3
 
     Returns
     -------
@@ -270,6 +271,7 @@ def dgamma_dt_KN(gamma, T = 2.726):
 def dgamma_dt_IC(gamma, phot_dens,
         emin = 1e-10, emax = 1e0,
         e1min = None, e1max = None,
+	e0 = None,
         esteps = 21, e1steps = 2001):
     """
     Calculate the electron energy loss 
@@ -282,6 +284,10 @@ def dgamma_dt_IC(gamma, phot_dens,
         gamma factor of electrons, n-dim
     phot_dens: function
         function that returns photon density in units 1 / eV / cm^3
+    e0: float or None (optional)
+	if float, photon density is treated as being a delta function Delta(e - e0),
+	where e0 is the energy in eV.
+	If None, full integration over photon density is performed
 
     Returns
     -------
@@ -291,11 +297,14 @@ def dgamma_dt_IC(gamma, phot_dens,
     -----
     see Blumenthal & Gould 1970, Eq. 2.56 in discussion below
     """
-    earray = np.logspace(np.log10(emin), 
+    if e0 is None:
+	earray = np.logspace(np.log10(emin), 
                 np.log10(emax), esteps)
-    if type(e1max) == type(None):
+    else:
+	earray = np.array([e0])
+    if e1max is None:
         e1max = 4. * gamma.max()**2. * 1e-2
-    if type(e1min) == type(None):
+    if e1min is None:
         e1min = 10. * emax 
     e1array = np.logspace(np.log10(e1min), 
                 np.log10(e1max), e1steps)
@@ -304,9 +313,17 @@ def dgamma_dt_IC(gamma, phot_dens,
     dndtdede1, mask = ic_scattered_phot_spec(ggg, eee, e111, phot_dens)
 
     unit = dndtdede1.unit
-    gg,ee = np.meshgrid(gamma, earray, indexing = 'ij')
-    result = simps( simps(dndtdede1.value * (e111 - eee) * e111, np.log(e111), axis = 2 ) * ee, np.log(ee), axis = 1 )
 
+    # perform full integration
+    gg,ee = np.meshgrid(gamma, earray, indexing = 'ij')
+    if e0 is None:
+	result = simps(
+		    simps(dndtdede1.value * (e111 - eee) * e111, np.log(e111), axis = 2 ) * ee,
+		    np.log(ee), axis = 1 )
+
+    # integration over initial photon energy is delta function
+    else:
+	result = simps(dndtdede1.value * (e111 - eee) * e111, np.log(e111), axis = 2 )[:,0]
 #    result = np.zeros_like(gamma)
 #    eee,e111 = np.meshgrid(earray, e1array, indexing = 'ij')
 #    for i, g in enumerate(gamma):
