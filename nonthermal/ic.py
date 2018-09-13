@@ -216,7 +216,7 @@ def tcool_Thomson(gamma, uphot):
 
     uphot_prime: float
         Energy density of external radiation field in comoving frame
-	in erg / cm^3
+        in erg / cm^3
 
     Returns
     -------
@@ -233,10 +233,11 @@ def tcool_Thomson(gamma, uphot):
     """
     if not type(uphot) == u.Quantity:
         uphot = uphot * u.Unit('g cm^-1  s^-2') # erg / cm^3
+    if not type(gamma) == u.Quantity:
+        gamma = gamma * u.dimensionless_unscaled
     # this is simply the factor from dgamma / dt
-    result = 3. * c.m_e.cgs * c.c.cgs / c.sigma_T.cgs / uphot / 4.
+    result = 3. * c.m_e.cgs * c.c.cgs / c.sigma_T.cgs / uphot / 4. / gamma
     # divide by gamma factor from mean scattered energy 
-    result /= gamma
     return result
 
 def dgamma_dt_KN(gamma, T = 2.726):
@@ -271,7 +272,7 @@ def dgamma_dt_KN(gamma, T = 2.726):
 def dgamma_dt_IC(gamma, phot_dens,
         emin = 1e-10, emax = 1e0,
         e1min = None, e1max = None,
-	e0 = None,
+        e0 = None,
         esteps = 21, e1steps = 2001):
     """
     Calculate the electron energy loss 
@@ -286,7 +287,7 @@ def dgamma_dt_IC(gamma, phot_dens,
         function that returns photon density in units 1 / eV / cm^3
     e0: float or None (optional)
         if float, photon density is treated as being a delta function Delta(e - e0),
-    	where e0 is the energy in eV. Therefore it should be an energy integrated 
+        where e0 is the energy in eV. Therefore it should be an energy integrated 
         photon density in units of 1 / cm^3.
         If None, full integration over photon density is performed
 
@@ -319,8 +320,8 @@ def dgamma_dt_IC(gamma, phot_dens,
     gg,ee = np.meshgrid(gamma, earray, indexing = 'ij')
     if e0 is None:
         result = simps(
-		    simps(dndtdede1.value * (e111 - eee) * e111, np.log(e111), axis = 2 ) * ee,
-		    np.log(ee), axis = 1 )
+            simps(dndtdede1.value * (e111 - eee) * e111, np.log(e111), axis = 2 ) * ee,
+            np.log(ee), axis = 1 )
         return result * unit * u.eV ** 3. / (c.m_e * c.c**2.).to('eV')
 
     # integration over initial photon energy is delta function
