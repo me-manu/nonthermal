@@ -285,9 +285,10 @@ def dgamma_dt_IC(gamma, phot_dens,
     phot_dens: function
         function that returns photon density in units 1 / eV / cm^3
     e0: float or None (optional)
-	if float, photon density is treated as being a delta function Delta(e - e0),
-	where e0 is the energy in eV.
-	If None, full integration over photon density is performed
+        if float, photon density is treated as being a delta function Delta(e - e0),
+    	where e0 is the energy in eV. Therefore it should be an energy integrated 
+        photon density in units of 1 / cm^3.
+        If None, full integration over photon density is performed
 
     Returns
     -------
@@ -298,10 +299,10 @@ def dgamma_dt_IC(gamma, phot_dens,
     see Blumenthal & Gould 1970, Eq. 2.56 in discussion below
     """
     if e0 is None:
-	earray = np.logspace(np.log10(emin), 
+        earray = np.logspace(np.log10(emin), 
                 np.log10(emax), esteps)
     else:
-	earray = np.array([e0])
+        earray = np.array([e0])
     if e1max is None:
         e1max = 4. * gamma.max()**2. * 1e-2
     if e1min is None:
@@ -317,13 +318,17 @@ def dgamma_dt_IC(gamma, phot_dens,
     # perform full integration
     gg,ee = np.meshgrid(gamma, earray, indexing = 'ij')
     if e0 is None:
-	result = simps(
+        result = simps(
 		    simps(dndtdede1.value * (e111 - eee) * e111, np.log(e111), axis = 2 ) * ee,
 		    np.log(ee), axis = 1 )
+        return result * unit * u.eV ** 3. / (c.m_e * c.c**2.).to('eV')
 
     # integration over initial photon energy is delta function
     else:
-	result = simps(dndtdede1.value * (e111 - eee) * e111, np.log(e111), axis = 2 )[:,0]
+        result = simps(dndtdede1.value * (e111 - eee) * e111, np.log(e111), axis = 2 )
+        result = result[:,0]
+        # divide by u.eV due to delta function: delta(e - e0) = delta((e - e0)/eV) / eV
+        return result * unit * u.eV ** 3. / (c.m_e * c.c**2.).to('eV') / u.eV
 #    result = np.zeros_like(gamma)
 #    eee,e111 = np.meshgrid(earray, e1array, indexing = 'ij')
 #    for i, g in enumerate(gamma):
@@ -332,7 +337,6 @@ def dgamma_dt_IC(gamma, phot_dens,
 #        result[i] = simps( simps(dndtdede1.value * (eee - e111) * e111, np.log(e111), axis = 1) * earray, 
 #                                np.log(earray))
 
-    return result * unit * u.eV ** 3. / (c.m_e * c.c**2.).to('eV')
 
 def dN_dt_IC(gamma, phot_dens,
         emin = 1e-10, emax = 1e0,
