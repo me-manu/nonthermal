@@ -39,7 +39,7 @@ def dgamma_dt_sync(gamma, B, pitch = 'iso'):
         else:
             raise ValueError("Pitch Angle value not understood")
     elif type(pitch) == float:
-        sin2pitch = np.sin(np.radian(pitch))**2.
+        sin2pitch = np.sin(np.radians(pitch))**2.
     else:
         raise ValueError("Pitch angle must be str of float")
     result *= sin2pitch
@@ -77,7 +77,7 @@ def Esync_peak(gamma, B, pitch = 'iso'):
         else:
             raise ValueError("Pitch Angle value not understood")
     elif type(pitch) == float:
-        sinpitch = np.sin(np.radian(pitch))
+        sinpitch = np.sin(np.radians(pitch))
     else:
         raise ValueError("Pitch angle must be str of float")
     result *= sinpitch
