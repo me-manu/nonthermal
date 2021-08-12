@@ -45,7 +45,6 @@ def dgamma_dt_sync(gamma, B, pitch = 'iso'):
     result *= sin2pitch
     if result.unit == "cm G2 s / g":
         result = result.value / u.s
-        print result.unit
     else:
         raise Exception
     return result
@@ -86,3 +85,46 @@ def Esync_peak(gamma, B, pitch = 'iso'):
     else:
         raise Exception
     return result
+
+def gamma_sync_peak(energy, B, pitch = 'iso'):
+    """
+    Calculates the gamma factor corresponding to some peak frequency.
+    Inverse of Esync_peak.
+
+    Parameters
+    ----------
+    energy: `~numpy.ndarray`
+        peak energies in eV, n-dim
+    B: float
+        B field in G
+    pitch: float or str, optional
+        if str and == 'iso' assume isotropic pitch angle
+        otherwise pitch angle in degrees
+
+    Returns
+    -------
+    gamma factors corresponding to peak energies `~astropy.Quantity`
+    """
+    # prefactor
+    prefactor = 1. / (3. * c.e.gauss * B * u.G / 4.
+                   / np.pi / c.m_e.cgs / c.c.cgs * c.h.cgs.to('eV s'))
+    if type(pitch) == str:
+        if pitch == 'iso':
+            sinpitch = np.sqrt(2. / 3.)
+        else:
+            raise ValueError("Pitch Angle value not understood")
+    elif type(pitch) == float:
+        sinpitch = np.sin(np.radians(pitch))
+    else:
+        raise ValueError("Pitch angle must be str of float")
+    prefactor /= sinpitch
+
+    if prefactor.unit == "(cm g) / eV Fr G s2":
+        prefactor = prefactor.value / u.eV
+    else:
+        raise Exception
+    if isinstance(energy, u.Quantity):
+        result = prefactor * energy
+    else:
+        result = prefactor * energy * u.eV
+    return np.sqrt(result)
